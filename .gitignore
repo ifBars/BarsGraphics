@@ -1,0 +1,22 @@
+.idea/
+.vs/
+bin/
+obj/
+artifacts/
+assets/icon-reference/
+
+# CI and local game inputs
+ci/
+local.build.props
+ci.build.props
+ScheduleOneAssemblies/
+
+# Release outputs and local tooling
+*.dll
+*.pdb
+*.deps.json
+*.zip
+*.user
+*.bin
+AGENTS.md
+.claude/

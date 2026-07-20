@@ -1,0 +1,238 @@
+name: Publish Bars Graphics Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing release tag to publish or refresh, for example v1.0.2
+        required: true
+        type: string
+      publish_nexus:
+        description: Upload the release package to Nexus Mods
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+env:
+  NEXUSMODS_API_KEY: ${{ secrets.NEXUSMODS_API_KEY }}
+  NEXUSMODS_FILE_GROUP_ID: ${{ vars.NEXUSMODS_FILE_GROUP_ID }}
+  RELEASE_DESCRIPTION: Graphics presets and an in-game tuning menu for Schedule I.
+
+jobs:
+  publish-release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve release metadata
+        id: metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+
+          if [[ ! "$tag" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "::error::Tag '$tag' must use vMAJOR.MINOR.PATCH format"
+            exit 1
+          fi
+
+          echo "tag=${tag}" >> "$GITHUB_OUTPUT"
+          echo "version=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout Bars Graphics
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.metadata.outputs.tag }}
+          fetch-depth: 0
+
+      - name: Verify release prerequisites
+        shell: bash
+        env:
+          GAME_ASSEMBLIES_REPO: ${{ secrets.GAME_ASSEMBLIES_REPO }}
+          GAME_ASSEMBLIES_TOKEN: ${{ secrets.GAME_ASSEMBLIES_TOKEN }}
+          IL2CPP_ASSEMBLIES_REPO: ${{ secrets.IL2CPP_ASSEMBLIES_REPO }}
+          IL2CPP_ASSEMBLIES_TOKEN: ${{ secrets.IL2CPP_ASSEMBLIES_TOKEN }}
+        run: |
+          set -euo pipefail
+          for name in GAME_ASSEMBLIES_REPO GAME_ASSEMBLIES_TOKEN IL2CPP_ASSEMBLIES_REPO IL2CPP_ASSEMBLIES_TOKEN; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Missing repository secret: ${name}"
+              exit 1
+            fi
+          done
+
+      - name: Checkout Mono game assemblies
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.GAME_ASSEMBLIES_REPO }}
+          token: ${{ secrets.GAME_ASSEMBLIES_TOKEN }}
+          path: game-assemblies-mono
+          fetch-depth: 1
+
+      - name: Checkout IL2CPP game assemblies
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ secrets.IL2CPP_ASSEMBLIES_REPO }}
+          token: ${{ secrets.IL2CPP_ASSEMBLIES_TOKEN }}
+          path: game-assemblies-il2cpp
+          fetch-depth: 1
+
+      - name: Checkout bGUI
+        uses: actions/checkout@v4
+        with:
+          repository: ifBars/bGUI
+          ref: v0.3.0
+          path: bGUI
+          fetch-depth: 1
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Prepare build inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          mono_root="$GITHUB_WORKSPACE/ci/mono"
+          il2cpp_root="$GITHUB_WORKSPACE/ci/il2cpp"
+          mkdir -p "$mono_root/Schedule I_Data/Managed" "$mono_root/MelonLoader/net35"
+          mkdir -p "$il2cpp_root/MelonLoader/Il2CppAssemblies" "$il2cpp_root/MelonLoader/net6"
+
+          cp -r game-assemblies-mono/Managed/. "$mono_root/Schedule I_Data/Managed/"
+          if [[ -d game-assemblies-mono/MelonLoaderMono ]]; then
+            cp -r game-assemblies-mono/MelonLoaderMono/. "$mono_root/MelonLoader/net35/"
+          elif [[ -d game-assemblies-mono/MelonLoader/net35 ]]; then
+            cp -r game-assemblies-mono/MelonLoader/net35/. "$mono_root/MelonLoader/net35/"
+          else
+            echo "::error::Unable to locate Mono MelonLoader assemblies"
+            exit 1
+          fi
+
+          cp -r game-assemblies-il2cpp/MelonLoader/Il2CppAssemblies/. "$il2cpp_root/MelonLoader/Il2CppAssemblies/"
+          cp -r game-assemblies-il2cpp/MelonLoader/net6/. "$il2cpp_root/MelonLoader/net6/"
+
+          cat > ../local.build.props <<EOF
+          <Project>
+            <PropertyGroup Condition="'\$(Configuration)' == 'MonoStable' Or '\$(Configuration)' == 'MonoDevelopment'">
+              <GamePath>$mono_root</GamePath>
+              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/bin/MonoRelease/netstandard2.1/bGUI.dll</BguiPath>
+            </PropertyGroup>
+            <PropertyGroup Condition="'\$(Configuration)' == 'Il2cppStable' Or '\$(Configuration)' == 'Il2cppDevelopment'">
+              <GamePath>$il2cpp_root</GamePath>
+              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/bin/Il2cppRelease/net6.0/bGUI.dll</BguiPath>
+            </PropertyGroup>
+          </Project>
+          EOF
+
+      - name: Build bGUI
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet restore bGUI/bGUI.csproj -p:Configuration=MonoRelease
+          dotnet build bGUI/bGUI.csproj -c MonoRelease --no-restore -p:AutomateLocalDeployment=false -p:MelonLoaderPath="$GITHUB_WORKSPACE/ci/mono/MelonLoader/net35" -p:UnityAssembliesPath="$GITHUB_WORKSPACE/ci/mono/Schedule I_Data/Managed"
+          dotnet restore bGUI/bGUI.csproj -p:Configuration=Il2cppRelease
+          dotnet build bGUI/bGUI.csproj -c Il2cppRelease --no-restore -p:AutomateLocalDeployment=false -p:MelonLoaderPath="$GITHUB_WORKSPACE/ci/il2cpp/MelonLoader/net6" -p:UnityAssembliesPath="$GITHUB_WORKSPACE/ci/il2cpp/MelonLoader/Il2CppAssemblies"
+
+      - name: Build Bars Graphics
+        shell: bash
+        run: |
+          set -euo pipefail
+          dotnet restore BarsGraphics.csproj -p:Configuration=MonoStable
+          dotnet build BarsGraphics.csproj --no-restore -c MonoStable -p:AutomateLocalDeployment=false
+          dotnet restore BarsGraphics.csproj -p:Configuration=Il2cppStable
+          dotnet build BarsGraphics.csproj --no-restore -c Il2cppStable -p:AutomateLocalDeployment=false
+
+      - name: Package release archive
+        id: package
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version="${{ steps.metadata.outputs.version }}"
+          package_dir="artifacts/BarsGraphics-${version}"
+          zip_path="artifacts/BarsGraphics-${version}-Nexus.zip"
+
+          source_version="$(sed -n 's/.*ModVersion = "\([^"]*\)".*/\1/p' Utils/Constants.cs)"
+          project_version="$(sed -n 's:.*<Version>\([^<]*\)</Version>.*:\1:p' BarsGraphics.csproj)"
+          if [[ "$source_version" != "$version" || "$project_version" != "$version" ]]; then
+            echo "::error::Tag version $version does not match source version $source_version / project version $project_version"
+            exit 1
+          fi
+
+          mkdir -p "$package_dir/fomod" "$package_dir/LICENSES" "$package_dir/Mods" "$package_dir/UserLibs"
+          cp .github/fomod/ModuleConfig.xml "$package_dir/fomod/ModuleConfig.xml"
+          cp bGUI/LICENSE "$package_dir/LICENSES/bGUI-MIT.txt"
+          cp bin/Il2cppStable/net6.0/BarsGraphics.dll "$package_dir/Mods/BarsGraphics.dll"
+          cp bGUI/bin/Il2cppRelease/net6.0/bGUI.dll "$package_dir/UserLibs/bGUI.dll"
+          cp assets/icon/bars-optimizer-nexus-thumbnail-512.png "$package_dir/icon.png"
+          cp README.md "$package_dir/README.md"
+          cp .github/nexus/nexuspost.bbcode "$package_dir/nexuspost.bbcode"
+
+          cat > "$package_dir/fomod/info.xml" <<EOF
+          <fomod>
+            <Name>Bars Graphics</Name>
+            <Author>ifBars</Author>
+            <Version>${version}</Version>
+            <Website>https://www.nexusmods.com/schedule1/mods/2237</Website>
+            <Description>Graphics presets and an in-game tuning menu for Schedule I. Includes BarsGraphics.dll for Mods and bGUI.dll for UserLibs.</Description>
+            <Groups><element>Utilities</element></Groups>
+          </fomod>
+          EOF
+
+          (
+            cd "$package_dir"
+            zip -r "../$(basename "$zip_path")" fomod LICENSES Mods UserLibs icon.png README.md nexuspost.bbcode
+          )
+
+          for entry in fomod/info.xml fomod/ModuleConfig.xml LICENSES/bGUI-MIT.txt Mods/BarsGraphics.dll UserLibs/bGUI.dll icon.png README.md nexuspost.bbcode; do
+            unzip -Z1 "$zip_path" | grep -Fx "$entry" >/dev/null
+          done
+
+          echo "zip_path=${zip_path}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish or update GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.metadata.outputs.tag }}
+          VERSION: ${{ steps.metadata.outputs.version }}
+          ZIP_PATH: ${{ steps.package.outputs.zip_path }}
+        run: |
+          set -euo pipefail
+          if ! gh release view "$TAG" >/dev/null 2>&1; then
+            gh release create "$TAG" --title "Bars Graphics $VERSION" --generate-notes
+          fi
+          gh release upload "$TAG" "$ZIP_PATH" --clobber
+
+      - name: Upload Nexus Mods release
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.publish_nexus) && env.NEXUSMODS_API_KEY != '' && env.NEXUSMODS_FILE_GROUP_ID != '' }}
+        uses: Nexus-Mods/upload-action@v1.0.0-beta.7
+        with:
+          api_key: ${{ env.NEXUSMODS_API_KEY }}
+          file_group_id: ${{ env.NEXUSMODS_FILE_GROUP_ID }}
+          filename: ${{ steps.package.outputs.zip_path }}
+          version: ${{ steps.metadata.outputs.version }}
+          display_name: Bars Graphics ${{ steps.metadata.outputs.version }}
+          description: ${{ env.RELEASE_DESCRIPTION }}
+          file_category: main
+          archive_existing_file: true
+          primary_mod_manager_download: true
+          allow_mod_manager_download: true
+          show_requirements_pop_up: false
+
+      - name: Skip Nexus Mods upload
+        if: ${{ (github.event_name != 'workflow_dispatch' || inputs.publish_nexus) && (env.NEXUSMODS_API_KEY == '' || env.NEXUSMODS_FILE_GROUP_ID == '') }}
+        shell: bash
+        run: echo "::notice::Skipping Nexus Mods upload because NEXUSMODS_API_KEY or NEXUSMODS_FILE_GROUP_ID is not configured."

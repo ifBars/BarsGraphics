@@ -1,0 +1,159 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="../local.build.props" Condition="Exists('../local.build.props')" />
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <TargetFramework Condition="'$(Configuration)'=='Il2cppStable' Or '$(Configuration)'=='Il2cppDevelopment'">net6.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <LangVersion>10.0</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Configurations>MonoStable;Il2cppStable;MonoDevelopment;Il2cppDevelopment</Configurations>
+    <RootNamespace>BarsGraphics</RootNamespace>
+    <AssemblyName>BarsGraphics</AssemblyName>
+    <Version>1.0.1</Version>
+    <AutomateLocalDeployment Condition="'$(AutomateLocalDeployment)'==''">false</AutomateLocalDeployment>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='MonoStable'">
+    <DefineConstants>MONO;STABLE</DefineConstants>
+    <GamePath Condition="'$(GamePath)'==''">D:\SteamLibrary\steamapps\common\Schedule I_alternate</GamePath>
+    <ManagedPath Condition="'$(ManagedPath)'==''">$(GamePath)\Schedule I_Data\Managed</ManagedPath>
+    <MelonLoaderPath Condition="'$(MelonLoaderPath)'==''">$(GamePath)\MelonLoader\net35</MelonLoaderPath>
+    <BguiPath Condition="'$(BguiPath)'==''">..\bGUI\bin\MonoRelease\netstandard2.1\bGUI.dll</BguiPath>
+    <OutputPath>bin\MonoStable\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='MonoDevelopment'">
+    <DefineConstants>MONO;STABLE;BARS_GRAPHICS_DEVELOPMENT</DefineConstants>
+    <GamePath Condition="'$(GamePath)'==''">D:\SteamLibrary\steamapps\common\Schedule I_alternate</GamePath>
+    <ManagedPath Condition="'$(ManagedPath)'==''">$(GamePath)\Schedule I_Data\Managed</ManagedPath>
+    <MelonLoaderPath Condition="'$(MelonLoaderPath)'==''">$(GamePath)\MelonLoader\net35</MelonLoaderPath>
+    <BguiPath Condition="'$(BguiPath)'==''">..\bGUI\bin\MonoRelease\netstandard2.1\bGUI.dll</BguiPath>
+    <OutputPath>bin\MonoDevelopment\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Il2cppStable'">
+    <DefineConstants>IL2CPP;STABLE</DefineConstants>
+    <GamePath Condition="'$(GamePath)'==''">D:\SteamLibrary\steamapps\common\Schedule I_public</GamePath>
+    <ManagedPath Condition="'$(ManagedPath)'==''">$(GamePath)\MelonLoader\Il2CppAssemblies</ManagedPath>
+    <MelonLoaderPath Condition="'$(MelonLoaderPath)'==''">$(GamePath)\MelonLoader\net6</MelonLoaderPath>
+    <BguiPath Condition="'$(BguiPath)'==''">..\bGUI\bin\Il2cppRelease\net6.0\bGUI.dll</BguiPath>
+    <OutputPath>bin\Il2cppStable\</OutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)'=='Il2cppDevelopment'">
+    <DefineConstants>IL2CPP;STABLE;BARS_GRAPHICS_DEVELOPMENT</DefineConstants>
+    <GamePath Condition="'$(GamePath)'==''">D:\SteamLibrary\steamapps\common\Schedule I_public</GamePath>
+    <ManagedPath Condition="'$(ManagedPath)'==''">$(GamePath)\MelonLoader\Il2CppAssemblies</ManagedPath>
+    <MelonLoaderPath Condition="'$(MelonLoaderPath)'==''">$(GamePath)\MelonLoader\net6</MelonLoaderPath>
+    <BguiPath Condition="'$(BguiPath)'==''">..\bGUI\bin\Il2cppRelease\net6.0\bGUI.dll</BguiPath>
+    <OutputPath>bin\Il2cppDevelopment\</OutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Core.cs" />
+    <Compile Include="Config\*.cs" />
+    <Compile Include="Models\*.cs" Exclude="Models\OptimizationImpactCatalog.cs" />
+    <Compile Include="Services\*.cs" Exclude="Services\BaseGameThrottleService.cs;Services\LiveControlService.cs;Services\PerformanceTestAutomationService.cs" />
+    <Compile Include="UI\*.cs" />
+    <Compile Include="Utils\*.cs" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='MonoDevelopment' Or '$(Configuration)'=='Il2cppDevelopment'">
+    <Compile Include="Models\OptimizationImpactCatalog.cs" />
+    <Compile Include="Services\BaseGameThrottleService.cs" />
+    <Compile Include="Services\LiveControlService.cs" />
+    <Compile Include="Services\PerformanceTestAutomationService.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="MelonLoader">
+      <HintPath>$(MelonLoaderPath)\MelonLoader.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(MelonLoaderPath)\0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="bGUI">
+      <HintPath>$(BguiPath)</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Assembly-CSharp">
+      <HintPath>$(ManagedPath)\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.CoreModule">
+      <HintPath>$(ManagedPath)\UnityEngine.CoreModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Core.Runtime">
+      <HintPath>$(ManagedPath)\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Unity.RenderPipelines.Universal.Runtime">
+      <HintPath>$(ManagedPath)\Unity.RenderPipelines.Universal.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.InputLegacyModule">
+      <HintPath>$(ManagedPath)\UnityEngine.InputLegacyModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.IMGUIModule">
+      <HintPath>$(ManagedPath)\UnityEngine.IMGUIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.ScreenCaptureModule">
+      <HintPath>$(ManagedPath)\UnityEngine.ScreenCaptureModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TextRenderingModule">
+      <HintPath>$(ManagedPath)\UnityEngine.TextRenderingModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.TerrainModule">
+      <HintPath>$(ManagedPath)\UnityEngine.TerrainModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UI">
+      <HintPath>$(ManagedPath)\UnityEngine.UI.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="UnityEngine.UIModule">
+      <HintPath>$(ManagedPath)\UnityEngine.UIModule.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(Configuration)'=='Il2cppStable' Or '$(Configuration)'=='Il2cppDevelopment'">
+    <Reference Include="Il2CppInterop.Runtime">
+      <HintPath>$(MelonLoaderPath)\Il2CppInterop.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2Cppmscorlib">
+      <HintPath>$(ManagedPath)\Il2Cppmscorlib.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="Il2CppFishNet.Runtime">
+      <HintPath>$(ManagedPath)\Il2CppFishNet.Runtime.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="ValidatePaths" BeforeTargets="ResolveReferences">
+    <Error Text="Missing MelonLoader at $(MelonLoaderPath). Check GamePath for $(Configuration)." Condition="!Exists('$(MelonLoaderPath)\MelonLoader.dll')" />
+    <Error Text="Missing Unity assemblies at $(ManagedPath). Check GamePath for $(Configuration)." Condition="!Exists('$(ManagedPath)\UnityEngine.CoreModule.dll')" />
+    <Error Text="Missing bGUI at $(BguiPath). Build bGUI for the matching runtime before building BarsGraphics." Condition="!Exists('$(BguiPath)')" />
+  </Target>
+
+  <Target Name="DeployToLocalGame" AfterTargets="Build" Condition="'$(AutomateLocalDeployment)'=='true' and Exists('$(GamePath)\Mods')">
+    <Message Text="[BarsGraphics] Copying $(TargetFileName) to $(GamePath)\Mods" Importance="high" />
+    <MakeDir Directories="$(GamePath)\UserLibs" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(GamePath)\Mods" SkipUnchangedFiles="true" />
+    <Copy SourceFiles="$(BguiPath)" DestinationFolder="$(GamePath)\UserLibs" SkipUnchangedFiles="true" />
+  </Target>
+</Project>
+
+

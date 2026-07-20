@@ -1,0 +1,54 @@
+[center][size=6][b]Bars Graphics[/b][/size]
+[i]Graphics presets and an in-game tuning menu for Schedule I[/i][/center]
+
+[size=5][b]What it is[/b][/size]
+
+Bars Graphics adds a small in-game menu for graphics/performance tuning. It is meant for players who want a few sensible presets first, with Custom settings available when you want to fine tune.
+
+[size=5][b]Features[/b][/size]
+
+[list]
+[*]Conservative, Balanced, Aggressive, and Custom profiles
+[*]FSR upscaling support, with plain render scale available as a Custom-only fallback
+[*]Controls for shadows, LOD, shader detail, texture mip limits, anisotropic filtering, additional lights, camera stacks, terrain foliage, culling, post processing, and frame pacing
+[*]F5 in-game menu and F6 optimizer toggle
+[*]Staged menu changes: adjust settings first, then press Apply when you are ready
+[/list]
+
+[size=5][b]Installation[/b][/size]
+
+Use Vortex/FOMOD, or install manually:
+
+[list]
+[*][font=Courier New]Mods/BarsGraphics.dll[/font] -> [font=Courier New]Schedule I/Mods/[/font]
+[*][font=Courier New]UserLibs/bGUI.dll[/font] -> [font=Courier New]Schedule I/UserLibs/[/font]
+[/list]
+
+[b]Important:[/b] keep [font=Courier New]bGUI.dll[/font] in [font=Courier New]UserLibs[/font]. Do not put it in [font=Courier New]Mods[/font].
+
+[size=5][b]Profiles[/b][/size]
+
+[list]
+[*][b]Off[/b]: restores the captured render settings
+[*][b]Conservative[/b]: lighter changes, closer to base-game visuals
+[*][b]Balanced[/b]: the recommended starting point
+[*][b]Aggressive[/b]: stronger FPS-focused tradeoffs
+[*][b]Custom[/b]: exposes the same options with short descriptions in the menu
+[/list]
+
+[size=5][b]Controls[/b][/size]
+
+[list]
+[*][b]F5[/b]: open or close the menu
+[*][b]F6[/b]: toggle the optimizer
+[*][b]Apply[/b]: save and apply pending menu edits
+[*][b]Revert[/b]: discard pending menu edits
+[/list]
+
+[size=5][b]Included dependency[/b][/size]
+
+This package includes [font=Courier New]bGUI.dll[/font] in [font=Courier New]UserLibs[/font]. bGUI is MIT licensed; the license text is included in the archive at [font=Courier New]LICENSES/bGUI-MIT.txt[/font].
+
+[size=5][b]Notes[/b][/size]
+
+This is a graphics/performance tuner, not a magic FPS button. Some options have visible tradeoffs. Start with Balanced, check the game in the areas you actually play, then adjust from there.
