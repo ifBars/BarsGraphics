@@ -12,7 +12,7 @@
     <Configurations>MonoStable;Il2cppStable;MonoDevelopment;Il2cppDevelopment</Configurations>
     <RootNamespace>BarsGraphics</RootNamespace>
     <AssemblyName>BarsGraphics</AssemblyName>
-    <Version>1.0.1</Version>
+    <Version>1.0.2</Version>
     <AutomateLocalDeployment Condition="'$(AutomateLocalDeployment)'==''">false</AutomateLocalDeployment>
   </PropertyGroup>
 
