@@ -100,8 +100,8 @@ jobs:
             --output bGUI-v0.3.0.zip \
             https://github.com/ifBars/bGUI/releases/download/v0.3.0/bGUI-v0.3.0.zip
           mkdir -p bGUI
-          unzip -p bGUI-v0.3.0.zip 'Mono\bGUI.dll' > bGUI/Mono-bGUI.dll
-          unzip -p bGUI-v0.3.0.zip 'Il2cpp\bGUI.dll' > bGUI/Il2cpp-bGUI.dll
+          unzip -p bGUI-v0.3.0.zip 'Mono/bGUI.dll' > bGUI/Mono-bGUI.dll
+          unzip -p bGUI-v0.3.0.zip 'Il2cpp/bGUI.dll' > bGUI/Il2cpp-bGUI.dll
           unzip -p bGUI-v0.3.0.zip LICENSE > bGUI/LICENSE
           test -s bGUI/Mono-bGUI.dll
           test -s bGUI/Il2cpp-bGUI.dll
