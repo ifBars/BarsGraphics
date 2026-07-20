@@ -192,10 +192,8 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          dotnet restore BarsGraphics.csproj -p:Configuration=MonoStable
-          dotnet build BarsGraphics.csproj --no-restore -c MonoStable -p:AutomateLocalDeployment=false
-          dotnet restore BarsGraphics.csproj -p:Configuration=Il2cppStable
-          dotnet build BarsGraphics.csproj --no-restore -c Il2cppStable -p:AutomateLocalDeployment=false
+          dotnet build BarsGraphics.csproj -c MonoStable -p:AutomateLocalDeployment=false
+          dotnet build BarsGraphics.csproj -c Il2cppStable -p:AutomateLocalDeployment=false
 
       - name: Package release archive
         id: package
