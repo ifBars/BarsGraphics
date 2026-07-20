@@ -29,7 +29,7 @@ jobs:
           fi
           version="${BASH_REMATCH[1]}"
           asset="BarsGraphics-${version}-Nexus.zip"
-          gh release download "$TAG" --pattern "$asset" --dir artifacts
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern "$asset" --dir artifacts
           test -s "artifacts/$asset"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "asset=artifacts/$asset" >> "$GITHUB_OUTPUT"
