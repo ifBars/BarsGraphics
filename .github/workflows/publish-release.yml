@@ -87,18 +87,21 @@ jobs:
           path: game-assemblies-il2cpp
           fetch-depth: 1
 
-      - name: Checkout bGUI
-        uses: actions/checkout@v4
-        with:
-          repository: ifBars/bGUI
-          ref: v0.3.0
-          path: bGUI
-          fetch-depth: 1
-
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '9.0.315'
+
+      - name: Download bGUI runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl --fail --location --silent --show-error \
+            --output bGUI-v0.3.0.zip \
+            https://github.com/ifBars/bGUI/releases/download/v0.3.0/bGUI-v0.3.0.zip
+          unzip -q bGUI-v0.3.0.zip -d bGUI
+          test -f bGUI/Mono/bGUI.dll
+          test -f bGUI/Il2cpp/bGUI.dll
 
       - name: Prepare build inputs
         shell: bash
@@ -158,23 +161,14 @@ jobs:
           <Project>
             <PropertyGroup Condition="'\$(Configuration)' == 'MonoStable' Or '\$(Configuration)' == 'MonoDevelopment'">
               <GamePath>$mono_root</GamePath>
-              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/bin/MonoRelease/netstandard2.1/bGUI.dll</BguiPath>
+              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/Mono/bGUI.dll</BguiPath>
             </PropertyGroup>
             <PropertyGroup Condition="'\$(Configuration)' == 'Il2cppStable' Or '\$(Configuration)' == 'Il2cppDevelopment'">
               <GamePath>$il2cpp_root</GamePath>
-              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/bin/Il2cppRelease/net6.0/bGUI.dll</BguiPath>
+              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/Il2cpp/bGUI.dll</BguiPath>
             </PropertyGroup>
           </Project>
           EOF
-
-      - name: Build bGUI
-        shell: bash
-        run: |
-          set -euo pipefail
-          dotnet restore bGUI/bGUI.csproj -p:Configuration=MonoRelease
-          dotnet build bGUI/bGUI.csproj -c MonoRelease --no-restore -p:AutomateLocalDeployment=false -p:MelonLoaderPath="$GITHUB_WORKSPACE/ci/mono/MelonLoader/net35" -p:UnityAssembliesPath="$GITHUB_WORKSPACE/ci/mono/Schedule I_Data/Managed"
-          dotnet restore bGUI/bGUI.csproj -p:Configuration=Il2cppRelease
-          dotnet build bGUI/bGUI.csproj -c Il2cppRelease --no-restore -p:AutomateLocalDeployment=false -p:MelonLoaderPath="$GITHUB_WORKSPACE/ci/il2cpp/MelonLoader/net6" -p:UnityAssembliesPath="$GITHUB_WORKSPACE/ci/il2cpp/MelonLoader/Il2CppAssemblies"
 
       - name: Build Bars Graphics
         shell: bash
@@ -206,7 +200,7 @@ jobs:
           cp .github/fomod/ModuleConfig.xml "$package_dir/fomod/ModuleConfig.xml"
           cp bGUI/LICENSE "$package_dir/LICENSES/bGUI-MIT.txt"
           cp bin/Il2cppStable/net6.0/BarsGraphics.dll "$package_dir/Mods/BarsGraphics.dll"
-          cp bGUI/bin/Il2cppRelease/net6.0/bGUI.dll "$package_dir/UserLibs/bGUI.dll"
+          cp bGUI/Il2cpp/bGUI.dll "$package_dir/UserLibs/bGUI.dll"
           cp assets/icon/bars-optimizer-nexus-thumbnail-512.png "$package_dir/icon.png"
           cp README.md "$package_dir/README.md"
           cp .github/nexus/nexuspost.bbcode "$package_dir/nexuspost.bbcode"
