@@ -125,6 +125,26 @@ jobs:
           cp -r game-assemblies-il2cpp/MelonLoader/Il2CppAssemblies/. "$il2cpp_root/MelonLoader/Il2CppAssemblies/"
           cp -r game-assemblies-il2cpp/MelonLoader/net6/. "$il2cpp_root/MelonLoader/net6/"
 
+          for assembly in Il2Cppmscorlib.dll Il2CppFishNet.Runtime.dll; do
+            if [[ ! -f "$il2cpp_root/MelonLoader/Il2CppAssemblies/$assembly" ]]; then
+              source_path="$(find game-assemblies-il2cpp -type f -name "$assembly" -print -quit)"
+              if [[ -z "$source_path" ]]; then
+                echo "::error::Unable to locate IL2CPP assembly: $assembly"
+                exit 1
+              fi
+              cp "$source_path" "$il2cpp_root/MelonLoader/Il2CppAssemblies/$assembly"
+            fi
+          done
+
+          if [[ ! -f "$il2cpp_root/MelonLoader/net6/Il2CppInterop.Runtime.dll" ]]; then
+            source_path="$(find game-assemblies-il2cpp -type f -name 'Il2CppInterop.Runtime.dll' -print -quit)"
+            if [[ -z "$source_path" ]]; then
+              echo "::error::Unable to locate IL2CPP interop runtime"
+              exit 1
+            fi
+            cp "$source_path" "$il2cpp_root/MelonLoader/net6/Il2CppInterop.Runtime.dll"
+          fi
+
           cat > ../local.build.props <<EOF
           <Project>
             <PropertyGroup Condition="'\$(Configuration)' == 'MonoStable' Or '\$(Configuration)' == 'MonoDevelopment'">
