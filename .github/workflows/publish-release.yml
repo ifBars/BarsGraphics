@@ -115,6 +115,8 @@ jobs:
             cp -r game-assemblies-mono/MelonLoaderMono/. "$mono_root/MelonLoader/net35/"
           elif [[ -d game-assemblies-mono/MelonLoader/net35 ]]; then
             cp -r game-assemblies-mono/MelonLoader/net35/. "$mono_root/MelonLoader/net35/"
+          elif [[ -d game-assemblies-mono/MelonLoader ]]; then
+            cp -r game-assemblies-mono/MelonLoader/. "$mono_root/MelonLoader/net35/"
           else
             echo "::error::Unable to locate Mono MelonLoader assemblies"
             exit 1
