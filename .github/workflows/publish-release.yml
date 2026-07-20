@@ -99,10 +99,25 @@ jobs:
           curl --fail --location --silent --show-error \
             --output bGUI-v0.3.0.zip \
             https://github.com/ifBars/bGUI/releases/download/v0.3.0/bGUI-v0.3.0.zip
-          mkdir -p bGUI
-          unzip -p bGUI-v0.3.0.zip 'Mono/bGUI.dll' > bGUI/Mono-bGUI.dll
-          unzip -p bGUI-v0.3.0.zip 'Il2cpp/bGUI.dll' > bGUI/Il2cpp-bGUI.dll
-          unzip -p bGUI-v0.3.0.zip LICENSE > bGUI/LICENSE
+          python3 - <<'PY'
+          from pathlib import Path
+          from zipfile import ZipFile
+
+          targets = {
+              "Mono/bGUI.dll": Path("bGUI/Mono-bGUI.dll"),
+              "Il2cpp/bGUI.dll": Path("bGUI/Il2cpp-bGUI.dll"),
+              "LICENSE": Path("bGUI/LICENSE"),
+          }
+          with ZipFile("bGUI-v0.3.0.zip") as archive:
+              for entry in archive.infolist():
+                  target = targets.get(entry.filename.replace("\\", "/"))
+                  if target is not None:
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      target.write_bytes(archive.read(entry))
+          missing = [str(path) for path in targets.values() if not path.is_file()]
+          if missing:
+              raise SystemExit(f"Missing bGUI release entries: {', '.join(missing)}")
+          PY
           test -s bGUI/Mono-bGUI.dll
           test -s bGUI/Il2cpp-bGUI.dll
 
