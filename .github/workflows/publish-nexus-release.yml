@@ -1,0 +1,50 @@
+name: Publish Bars Graphics Nexus Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing GitHub release tag, for example v1.0.2
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  publish-nexus:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve release asset
+        id: release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          if [[ ! "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            echo "::error::Tag '$TAG' must use vMAJOR.MINOR.PATCH format"
+            exit 1
+          fi
+          version="${BASH_REMATCH[1]}"
+          asset="BarsGraphics-${version}-Nexus.zip"
+          gh release download "$TAG" --pattern "$asset" --dir artifacts
+          test -s "artifacts/$asset"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "asset=artifacts/$asset" >> "$GITHUB_OUTPUT"
+
+      - name: Upload Nexus Mods release
+        uses: Nexus-Mods/upload-action@v1.0.0-beta.7
+        with:
+          api_key: ${{ secrets.NEXUSMODS_API_KEY }}
+          file_group_id: ${{ vars.NEXUSMODS_FILE_GROUP_ID }}
+          filename: ${{ steps.release.outputs.asset }}
+          version: ${{ steps.release.outputs.version }}
+          display_name: Bars Graphics ${{ steps.release.outputs.version }}
+          description: Graphics presets and an in-game tuning menu for Schedule I.
+          file_category: main
+          archive_existing_file: true
+          primary_mod_manager_download: true
+          allow_mod_manager_download: true
+          show_requirements_pop_up: false
