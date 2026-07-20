@@ -99,9 +99,12 @@ jobs:
           curl --fail --location --silent --show-error \
             --output bGUI-v0.3.0.zip \
             https://github.com/ifBars/bGUI/releases/download/v0.3.0/bGUI-v0.3.0.zip
-          unzip -q bGUI-v0.3.0.zip -d bGUI
-          test -f bGUI/Mono/bGUI.dll
-          test -f bGUI/Il2cpp/bGUI.dll
+          mkdir -p bGUI
+          unzip -p bGUI-v0.3.0.zip 'Mono\bGUI.dll' > bGUI/Mono-bGUI.dll
+          unzip -p bGUI-v0.3.0.zip 'Il2cpp\bGUI.dll' > bGUI/Il2cpp-bGUI.dll
+          unzip -p bGUI-v0.3.0.zip LICENSE > bGUI/LICENSE
+          test -s bGUI/Mono-bGUI.dll
+          test -s bGUI/Il2cpp-bGUI.dll
 
       - name: Prepare build inputs
         shell: bash
@@ -161,11 +164,11 @@ jobs:
           <Project>
             <PropertyGroup Condition="'\$(Configuration)' == 'MonoStable' Or '\$(Configuration)' == 'MonoDevelopment'">
               <GamePath>$mono_root</GamePath>
-              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/Mono/bGUI.dll</BguiPath>
+              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/Mono-bGUI.dll</BguiPath>
             </PropertyGroup>
             <PropertyGroup Condition="'\$(Configuration)' == 'Il2cppStable' Or '\$(Configuration)' == 'Il2cppDevelopment'">
               <GamePath>$il2cpp_root</GamePath>
-              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/Il2cpp/bGUI.dll</BguiPath>
+              <BguiPath>\$(MSBuildThisFileDirectory)BarsGraphics/bGUI/Il2cpp-bGUI.dll</BguiPath>
             </PropertyGroup>
           </Project>
           EOF
@@ -200,7 +203,7 @@ jobs:
           cp .github/fomod/ModuleConfig.xml "$package_dir/fomod/ModuleConfig.xml"
           cp bGUI/LICENSE "$package_dir/LICENSES/bGUI-MIT.txt"
           cp bin/Il2cppStable/net6.0/BarsGraphics.dll "$package_dir/Mods/BarsGraphics.dll"
-          cp bGUI/Il2cpp/bGUI.dll "$package_dir/UserLibs/bGUI.dll"
+          cp bGUI/Il2cpp-bGUI.dll "$package_dir/UserLibs/bGUI.dll"
           cp assets/icon/bars-optimizer-nexus-thumbnail-512.png "$package_dir/icon.png"
           cp README.md "$package_dir/README.md"
           cp .github/nexus/nexuspost.bbcode "$package_dir/nexuspost.bbcode"
