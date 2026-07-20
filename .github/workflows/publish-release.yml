@@ -98,12 +98,21 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: '9.0.315'
 
       - name: Prepare build inputs
         shell: bash
         run: |
           set -euo pipefail
+
+          cat > global.json <<'EOF'
+          {
+            "sdk": {
+              "version": "9.0.315",
+              "rollForward": "disable"
+            }
+          }
+          EOF
 
           mono_root="$GITHUB_WORKSPACE/ci/mono"
           il2cpp_root="$GITHUB_WORKSPACE/ci/il2cpp"
